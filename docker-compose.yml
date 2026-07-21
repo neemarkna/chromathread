@@ -1,0 +1,10 @@
+services:
+  chromathread:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chromathread:latest
+    container_name: chromathread-app
+    ports:
+      - "3000:80"        # เข้าใช้ผ่าน http://localhost:3000
+    restart: unless-stopped
