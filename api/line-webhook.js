@@ -87,6 +87,19 @@ function createGoogleCalendarUrl(title, dateStr, timeStr) {
 }
 
 /**
+ * Extract clean meeting title from user text
+ */
+function cleanMeetingTitle(userText) {
+  let title = userText
+    .replace(/^ลงบันทึกให้หน่อยว่า/g, '')
+    .replace(/^บันทึกนัด/g, '')
+    .replace(/^ช่วยจดนัด/g, '')
+    .replace(/^นัด/g, '')
+    .trim();
+  return title || userText;
+}
+
+/**
  * AI Agent Response Generator for เลขาคิม (@958xhyrx)
  */
 function generateAiReply(userText) {
@@ -99,55 +112,13 @@ function generateAiReply(userText) {
     return [
       {
         type: 'text',
-        text: 'หนูเลขาคิมจัดสรุปรายการบัญชีให้อัตโนมัติเรียบร้อยค่ะ 📊'
-      },
-      {
-        type: 'flex',
-        altText: 'สรุปรายการบัญชีรายจ่าย - เลขาคิม AI',
-        contents: {
-          type: 'bubble',
-          size: 'mega',
-          header: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              { type: 'text', text: '🌸 เลขาคิม AI Report (@958xhyrx)', weight: 'bold', color: '#06C755', size: 'sm' },
-              { type: 'text', text: 'สรุปการเงินรายจ่ายวันนี้ 💳', weight: 'bold', size: 'lg', color: '#ffffff', margin: 'md' }
-            ],
-            backgroundColor: '#0F172A'
-          },
-          body: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: 'ยอดรวมรายจ่ายวันนี้', size: 'xs', color: '#94A3B8' },
-                  { type: 'text', text: '฿1,450.00', size: 'sm', weight: 'bold', color: '#4ADE80', align: 'end' }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: 'สแกนสลิปอัตโนมัติ', size: 'xs', color: '#94A3B8' },
-                  { type: 'text', text: '🟢 Active (14 สลิป)', size: 'xs', color: '#38BDF8', align: 'end' }
-                ],
-                margin: 'md'
-              }
-            ],
-            backgroundColor: '#1E293B'
-          }
-        }
+        text: 'หนูเลขาคิมจัดสรุปรายการบัญชีให้อัตโนมัติเรียบร้อยค่ะ 📊\n\n💳 ยอดรวมรายจ่ายวันนี้: ฿1,450.00 บาท (14 สลิป)\n🟢 สถานะสแกนสลิปจากโฟลเดอร์: ทำงานปกติ'
       }
     ];
   }
 
   // 2. Schedule / Meeting Intent
-  if (textLower.includes('นัด') || textLower.includes('ประชุม') || textLower.includes('ตาราง') || textLower.includes('พบ') || textLower.includes('calendar')) {
-    // Extract time from message
+  if (textLower.includes('นัด') || textLower.includes('ประชุม') || textLower.includes('ทานข้าว') || textLower.includes('ตาราง') || textLower.includes('พบ') || textLower.includes('calendar')) {
     let timeStr = '10:00';
     const timeMatch = userText.match(/(\d{1,2})[:.]?(\d{2})?\s*(โมง|น|นาฬิกา)?/);
     if (timeMatch) {
@@ -156,79 +127,13 @@ function generateAiReply(userText) {
       timeStr = `${hour.toString().padStart(2, '0')}:${min}`;
     }
 
-    const gcalLink = createGoogleCalendarUrl(userText, dateStr, timeStr);
+    const meetingTitle = cleanMeetingTitle(userText);
+    const gcalLink = createGoogleCalendarUrl(meetingTitle, dateStr, timeStr);
 
     return [
       {
         type: 'text',
-        text: `หนูเลขาคิมลงตารางนัดหมาย "${userText}" เรียบร้อยค่ะ! กดปุ่มล่างนี้เพื่อเพิ่มลง Google Calendar บนมือถือใน 1 คลิกได้เลยนะคะ 📅✨`
-      },
-      {
-        type: 'flex',
-        altText: `นัดหมายใหม่: ${userText}`,
-        contents: {
-          type: 'bubble',
-          size: 'mega',
-          header: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              { type: 'text', text: '📅 Google Calendar Sync', weight: 'bold', color: '#38BDF8', size: 'sm' },
-              { type: 'text', text: 'ลงตารางนัดหมายสำเร็จ 📌', weight: 'bold', size: 'lg', color: '#ffffff', margin: 'sm' }
-            ],
-            backgroundColor: '#0F172A'
-          },
-          body: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              {
-                type: 'text',
-                text: userText,
-                weight: 'bold',
-                size: 'md',
-                color: '#F8FAFC',
-                wrap: true
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: 'วันที่', size: 'xs', color: '#94A3B8' },
-                  { type: 'text', text: dateStr, size: 'xs', color: '#CBD5E1', align: 'end' }
-                ],
-                margin: 'md'
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: 'เวลานัด', size: 'xs', color: '#94A3B8' },
-                  { type: 'text', text: `${timeStr} น.`, size: 'xs', color: '#38BDF8', weight: 'bold', align: 'end' }
-                ],
-                margin: 'sm'
-              }
-            ],
-            backgroundColor: '#1E293B'
-          },
-          footer: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              {
-                type: 'button',
-                action: {
-                  type: 'uri',
-                  label: '📅 เพิ่มลง Google Calendar',
-                  uri: gcalLink
-                },
-                style: 'primary',
-                color: '#06C755'
-              }
-            ],
-            backgroundColor: '#0F172A'
-          }
-        }
+        text: `หนูเลขาคิมบันทึกนัดหมายเรียบร้อยแล้วค่ะ! 📅✨\n\n📌 หัวข้อ: ${meetingTitle}\n⏰ เวลา: วันนี้ (${dateStr}) เวลา ${timeStr} น.\n\n👉 แตะลิงก์นี้เพื่อเพิ่มลง Google Calendar ได้ทันที:\n${gcalLink}`
       }
     ];
   }
