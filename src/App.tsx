@@ -139,14 +139,14 @@ export function App() {
     ];
   });
 
-  // LINE State
+  // LINE State - Connected to "เลขาคิม" (@958xhyrx)
   const [lineState, setLineState] = useState<LineChannelState>(() => {
     const saved = localStorage.getItem('ai_sec_line');
     if (saved) return JSON.parse(saved);
 
     return {
-      channelId: '1657890123',
-      channelName: 'เลขา AI ส่วนตัว (Official)',
+      channelId: '2010871312',
+      channelName: 'เลขาคิม (@958xhyrx)',
       isConnected: true,
       autoReplyEnabled: true,
       simulatedMessages: [
@@ -154,13 +154,13 @@ export function App() {
           id: 'msg-1',
           sender: 'assistant',
           timestamp: '09:00',
-          text: 'สวัสดีค่ะ! เลขา AI ยินดีรับใช้ค่ะ 🌸 มีอะไรให้หนูช่วยจัดการวันนี้ไหมคะ?'
+          text: 'สวัสดีค่ะ! หนูเลขาคิม ยินดีรับใช้ค่ะ 🌸 มีอะไรให้หนูช่วยจัดการวันนี้ไหมคะ?'
         },
         {
           id: 'msg-2',
           sender: 'assistant',
           timestamp: '09:01',
-          text: '📥 ระบบเฝ้าโฟลเดอร์สลิปทำงานปกติค่ะ เมื่อมีรูปสลิปใหม่เข้าโฟลเดอร์ หนูจะสแกนเข้าบัญชีและทักแจ้งทันทีนะคะ!'
+          text: '📥 บัญชีไลน์ @958xhyrx เชื่อมต่อกับระบบเฝ้าโฟลเดอร์สลิปเรียบร้อยแล้วค่ะ!'
         }
       ]
     };
@@ -270,7 +270,7 @@ export function App() {
       }
     );
 
-    showToast(`📥 เลขาพบสลิปใหม่! บันทึก ${newExpense.title} ฿${newExpense.amount} เรียบร้อยแล้ว`);
+    showToast(`📥 เลขาคิมพบสลิปใหม่! บันทึก ${newExpense.title} ฿${newExpense.amount} เรียบร้อยแล้ว`);
   };
 
   const handleConfirmVoiceIntent = (intent: ParsedVoiceIntent) => {
@@ -332,7 +332,7 @@ export function App() {
       badgeText: 'Voice AI'
     }, ...prev]);
 
-    showToast(`เลขาบันทึก: ${intent.summary}`);
+    showToast(`เลขาคิมบันทึก: ${intent.summary}`);
   };
 
   const handleGenerateAiSummary = () => {
@@ -344,7 +344,7 @@ export function App() {
       `💳 **ยอดรวมรายจ่ายวันนี้:** ฿${totalExp.toLocaleString()} บาท (${expenses.length} รายการ)\n` +
       `📅 **นัดหมายคงเหลือ:** ${schedules.filter(s => s.status === 'upcoming').length} นัดหมาย\n` +
       `📋 **งานที่ต้องทำ:** ${tasks.filter(t => !t.completed).length} รายการที่รอดำเนินการ\n\n` +
-      `💡 *สร้างโดย เลขา AI ส่วนตัว อัตโนมัติ*`;
+      `💡 *สร้างโดย เลขาคิม AI (@958xhyrx) อัตโนมัติ*`;
 
     const summaryNote: NoteItem = {
       id: `note-summary-${Date.now()}`,
@@ -390,7 +390,7 @@ export function App() {
                     </div>
                     <div>
                       <h2 className="font-bold text-slate-100 text-sm">ยินดีต้อนรับค่ะคุณผู้ใช้! 🌸</h2>
-                      <p className="text-xs text-slate-400">หนูคือเลขา AI ช่วยเฝ้าสลิปและจัดการนัดหมายให้ค่ะ</p>
+                      <p className="text-xs text-slate-400">หนูคือ <span className="text-emerald-400 font-semibold">เลขาคิม (@958xhyrx)</span> ช่วยเฝ้าสลิปและจัดการนัดหมายให้ค่ะ</p>
                     </div>
                   </div>
                 </div>
@@ -454,8 +454,8 @@ export function App() {
                     <MessageSquare className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-slate-200">LINE Official</div>
-                    <div className="text-[10px] text-slate-400">คุยแชตสั่งงานในไลน์</div>
+                    <div className="text-xs font-semibold text-slate-200">LINE: @958xhyrx</div>
+                    <div className="text-[10px] text-slate-400">คุยแชตกับเลขาคิมในไลน์</div>
                   </div>
                 </button>
               </div>
