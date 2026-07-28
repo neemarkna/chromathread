@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// LINE Channel Access Token & Secret for เลขาคิม (@958xhyrx)
-const LINE_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN || 'YOUR_CHANNEL_ACCESS_TOKEN';
+// LINE Credentials for เลขาคิม (@958xhyrx)
+const CHANNEL_ID = '2010871312';
+const CHANNEL_SECRET = 'fab11032d57ed56a451d89a2388c7cca';
 
 interface LineWebhookEvent {
   type: string;
@@ -17,22 +18,69 @@ interface LineWebhookEvent {
   };
 }
 
+let cachedAccessToken: string | null = null;
+let tokenExpiresAt: number = 0;
+
+/**
+ * Fetch dynamic Channel Access Token using Channel ID & Secret
+ */
+async function getChannelAccessToken(): Promise<string | null> {
+  // Return cached token if valid
+  if (cachedAccessToken && Date.now() < tokenExpiresAt) {
+    return cachedAccessToken;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('client_id', CHANNEL_ID);
+    params.append('client_secret', CHANNEL_SECRET);
+
+    const res = await fetch('https://api.line.me/v2/oauth/accessToken', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+
+    const data = await res.json();
+    if (data.access_token) {
+      cachedAccessToken = data.access_token;
+      tokenExpiresAt = Date.now() + (data.expires_in || 2592000) * 1000 - 60000;
+      return cachedAccessToken;
+    }
+  } catch (err) {
+    console.error('Error fetching LINE access token:', err);
+  }
+
+  return null;
+}
+
 /**
  * Send Reply Message back to LINE Chat Room
  */
 async function replyLineMessage(replyToken: string, messages: any[]) {
+  const token = await getChannelAccessToken();
+  if (!token) {
+    console.error('No valid LINE access token available');
+    return;
+  }
+
   try {
-    await fetch('https://api.line.me/v2/bot/message/reply', {
+    const res = await fetch('https://api.line.me/v2/bot/message/reply', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${LINE_ACCESS_TOKEN}`
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
         replyToken,
         messages
       })
     });
+    const resultText = await res.text();
+    console.log('LINE Reply Status:', res.status, resultText);
   } catch (err) {
     console.error('Error replying to LINE:', err);
   }
@@ -109,7 +157,7 @@ function processAiAgentResponse(userText: string) {
   }
 
   // 2. Schedule & Calendar Intent
-  if (textLower.includes('นัด') || textLower.includes('ประชุม') || textLower.includes('ตาราง') || textLower.includes(' calendar')) {
+  if (textLower.includes('นัด') || textLower.includes('ประชุม') || textLower.includes('ตาราง') || textLower.includes('calendar')) {
     return [
       {
         type: 'text',
@@ -139,7 +187,7 @@ function processAiAgentResponse(userText: string) {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(200).send('LINE AI Agent Webhook is active');
+    return res.status(200).send('LINE AI Agent Webhook is active for เลขาคิม');
   }
 
   const events: LineWebhookEvent[] = req.body.events || [];
