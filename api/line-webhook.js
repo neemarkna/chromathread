@@ -1,6 +1,7 @@
 // LINE Channel Credentials for เลขาคิม (@958xhyrx)
 const CHANNEL_ID = '2010871312';
 const CHANNEL_SECRET = 'fab11032d57ed56a451d89a2388c7cca';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 let cachedAccessToken = null;
 let tokenExpiresAt = 0;
@@ -100,56 +101,60 @@ function cleanMeetingTitle(userText) {
 }
 
 /**
- * Comprehensive Smart Conversational AI Agent Engine for เลขาคิม (@958xhyrx)
+ * Call Google Gemini LLM API for natural AI conversation
  */
-function generateContextualAiAgentResponse(userText) {
+async function callGeminiAiModel(userText) {
+  if (!GEMINI_API_KEY) return null;
+
+  try {
+    const systemPrompt = `คุณคือ "เลขาคิม" (Personal AI Secretary) เลขาส่วนตัวประจำตัวของคุณผู้ใช้ ตอบเป็นภาษาไทยด้วยน้ำเสียงสุภาพ อ่อนหวาน มีไหวพริบ ฉลาด ใส่ใจ และเป็นกันเอง ใช้คำแทนตัวเองว่า "หนูเลขาคิม" หรือ "หนู" คอยช่วยแนะนำอาหาร วางแผนงาน สรุปข้อมูล ตอบคำถาม ให้คำปรึกษา และคุยโต้ตอบต่อเนื่องอย่างเป็นธรรมชาติ`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\nข้อความจากคุณผู้ใช้: "${userText}"` }]
+          }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (text) return text.trim();
+  } catch (err) {
+    console.error('Gemini API Error:', err);
+  }
+
+  return null;
+}
+
+/**
+ * Conversational AI Agent Intelligence Engine for เลขาคิม (@958xhyrx)
+ */
+async function generateSmartAiAgentReply(userText) {
   const textClean = userText.trim();
   const textLower = textClean.toLowerCase();
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
 
-  // =========================================================
-  // 1. FOOD & DINING RECOMMENDATIONS (มื้ออาหาร / กินอะไรดี)
-  // =========================================================
-  if (
-    textLower.includes('กินอะไร') || 
-    textLower.includes('ทานอะไร') || 
-    textLower.includes('เมนูอาหาร') || 
-    textLower.includes('หิว') ||
-    textLower.includes('กินไรดี') ||
-    textLower.includes('ทานไรดี')
-  ) {
-    return `หนูเลขาคิมคัดสรรเมนูอร่อยๆ สำหรับมื้อนี้มาให้คุณผู้ใช้เลือกเลยค่ะ! 😋🍲\n\n1. 🍛 **กะเพราหมูกรอบไข่ดาวราดข้าว**: เมนูคลาสสิก หอมเผ็ดกำลังดี\n2. 🍜 **ก๋วยเตี๋ยวเรือน้ำตกเข้มข้น**: ซุปร้อนๆ อร่อยแซ่บเพิ่มพลัง\n3. 🍱 **ข้าวหน้าไก่เทริยากิ / สลัดสุขภาพ**: ย่อยง่าย ไม่อึดอัดช่วงทำงาน\n4. 🍲 **ชาบู / สุกี้**: อิ่มอร่อยสบายท้อง\n\nคุณผู้ใช้สนใจเป็นอาหารไทย ญี่ปุ่น หรืออาหารคลีนคลีนดีคะ? พิมพ์บอกหนูเลขาคิมได้เลยนะคะ! 🌸`;
-  }
-
-  // =========================================================
-  // 2. MEETING & DEX GROUP SUMMARY (สรุปการประชุม / กลุ่ม DEX)
-  // =========================================================
-  if (
-    textLower.includes('สรุปการประชุม') || 
-    textLower.includes('สรุปประชุม') || 
-    textLower.includes('กลุ่ม dex') || 
-    textLower.includes('กลุ่มdex') ||
-    textLower.includes('สรุป dex')
-  ) {
-    return `หนูเลขาคิมสรุปประเด็นสำคัญจากการประชุมกลุ่ม DEX ครั้งล่าสุดให้แล้วค่ะ 📑✨\n\n📌 **หัวข้อหลัก:** สรุปแผนงานและระบบเลขา AI (DEX Group)\n\n💡 **สรุป 3 ประเด็นสำคัญ:**\n1. **ระบบเฝ้าโฟลเดอร์สลิป**: อัปเกรดให้ตรวจจับและบันทึกรายจ่ายเข้าบัญชี 24 ชม.\n2. **LINE Official Account (@958xhyrx)**: เปิดใช้งาน AI Agent โต้ตอบในแชตอัตโนมัติ\n3. **Google Calendar Sync**: รองรับการลงตารางนัดหมายและกดเพิ่มใน 1 คลิก\n\nหากต้องการข้อมูลส่วนไหนเพิ่มเติม บอกหนูเลขาคิมได้เลยนะคะ! 😊`;
-  }
-
-  // =========================================================
-  // 3. EXPLICIT CALENDAR SCHEDULING (ลงนัดหมาย / ประชุมใหม่)
-  // =========================================================
-  const isExplicitSchedulingCommand = (
+  // 1. Explicit Calendar Scheduling Action
+  const isExplicitScheduling = (
     textLower.startsWith('นัด') || 
     textLower.startsWith('บันทึกนัด') || 
     textLower.startsWith('สร้างนัด') || 
     textLower.startsWith('เพิ่มนัด') || 
     textLower.includes('มีนัด') || 
     textLower.includes('นัดกับ') ||
-    textLower.includes('นัดคุย') ||
     textLower.includes('นัดหมอ')
   );
 
-  if (isExplicitSchedulingCommand) {
+  if (isExplicitScheduling) {
     let timeStr = '10:00';
     const timeMatch = textClean.match(/(\d{1,2})[:.]?(\d{2})?\s*(โมง|น|นาฬิกา)?/);
     if (timeMatch) {
@@ -164,46 +169,30 @@ function generateContextualAiAgentResponse(userText) {
     return `หนูเลขาคิมบันทึกนัดหมายเรียบร้อยแล้วค่ะ! 📅✨\n\n📌 หัวข้อ: ${meetingTitle}\n⏰ เวลา: วันนี้ (${dateStr}) เวลา ${timeStr} น.\n\n👉 แตะลิงก์นี้เพื่อเพิ่มลง Google Calendar ได้ทันที:\n${gcalLink}`;
   }
 
-  // =========================================================
-  // 4. FINANCIAL & SLIP STATS (สรุปสลิป / ยอดเงิน)
-  // =========================================================
-  if (
-    textLower.includes('สรุปสลิป') || 
-    textLower.includes('สรุปรายจ่าย') || 
-    textLower.includes('ยอดสลิป') || 
-    textLower.includes('สรุปบัญชี') ||
-    textLower.includes('เช็กบัญชี')
-  ) {
+  // 2. Explicit Financial & Slip Query Action
+  if (textLower.includes('สรุปสลิป') || textLower.includes('สรุปรายจ่าย') || textLower.includes('ยอดสลิป') || textLower.includes('สรุปบัญชี')) {
     return `หนูเลขาคิมจัดสรุปรายการบัญชีให้อัตโนมัติเรียบร้อยค่ะ 📊\n\n💳 ยอดรวมรายจ่ายวันนี้: ฿1,450.00 บาท (14 สลิป)\n🟢 สถานะสแกนสลิปจากโฟลเดอร์: ทำงานปกติ 24 ชม.ค่ะ`;
   }
 
-  // =========================================================
-  // 5. TO-DO TASKS (รายการงาน / เตือนความจำ)
-  // =========================================================
-  if (
-    textLower.startsWith('ต้อง') || 
-    textLower.startsWith('เตือน') || 
-    textLower.startsWith('ฝาก') || 
-    textLower.startsWith('อย่าลืม')
-  ) {
-    return `รับทราบค่ะคุณผู้ใช้! หนูเลขาคิมเพิ่มรายการที่ต้องทำ "${textClean}" ไว้ใน To-Do List เรียบร้อยค่ะ 📋 มีอะไรให้หนูช่วยเตือนเพิ่มเติมไหมคะ?`;
+  // 3. Try Gemini LLM for Real Dynamic Generative Response
+  const geminiReply = await callGeminiAiModel(textClean);
+  if (geminiReply) {
+    return geminiReply;
   }
 
-  // =========================================================
-  // 6. GREETINGS & INTROS (ทักทาย)
-  // =========================================================
-  if (
-    textLower.includes('สวัสดี') || 
-    textLower.includes('หวัดดี') || 
-    textLower.includes('hello') || 
-    textLower.includes('hi')
-  ) {
-    return `สวัสดีค่ะคุณผู้ใช้! 🌸 หนู "เลขาคิม AI" พร้อมช่วยคุณทุกเรื่องค่ะ ไม่ว่าจะสรุปการประชุม, แนะนำเมนูอาหาร, ลงตารางนัดหมาย, สแกนสลิปทำบัญชี หรือตอบคำถามทั่วไป บอกหนูได้เลยนะคะ! 😊`;
+  // 4. Enhanced Dynamic Response Engine for Food / Clean Food / DEX Summary
+  if (textLower.includes('คลีน') || textLower.includes('อาหารคลีน')) {
+    return `จัดไปค่ะคุณผู้ใช้! หนูเลขาคิมคัด 4 เมนูอาหารคลีนแคลต่ำ อร่อยสบายท้องมาให้เลยค่ะ 🥗✨\n\n1. 🥗 **สลัดอกไก่นุ่มพริกไทยดำ + น้ำสลัดงาใส**: โปรตีนสูง อิ่มนาน\n2. 🍚 **ข้าวไรซ์เบอร์รี + ปลากะพงนึ่งซีอิ๊ว**: ย่อยง่าย คุณค่าทางอาหารครบถ้วน\n3. 🍜 **สุกี้น้ำอกไก่ใส่เส้นบุก**: แคลอรีต่ำมาก รสชาติแซ่บรอบดึก\n4. 🥩 **สเต๊กปลาแซลมอนย่างผักโขม**: โอเมก้า 3 บำรุงสมองช่วงทำงาน\n\nคุณผู้ใช้ชอบเมนูไหนเป็นพิเศษ พิมพ์บอกหนูเลขาคิมได้เลยนะคะ! 🌸`;
   }
 
-  // =========================================================
-  // 7. GENERAL AI AGENT CONVERSATIONAL REASONING
-  // =========================================================
+  if (textLower.includes('กินอะไร') || textLower.includes('ทานอะไร') || textLower.includes('เมนูอาหาร') || textLower.includes('หิว')) {
+    return `หนูเลขาคิมคัดสรรเมนูอร่อยๆ สำหรับมื้อนี้มาให้เลือกเลยค่ะ! 😋🍲\n\n1. 🍛 **กะเพราหมูกรอบไข่ดาวราดข้าว**: เมนูยอดฮิต เข้มข้นกลมกล่อม\n2. 🍜 **ก๋วยเตี๋ยวเรือน้ำตกเข้มข้น**: ซุปร้อนๆ เพิ่มพลังทำงาน\n3. 🍱 **ข้าวหน้าไก่เทริยากิ / สลัดสุขภาพ**: ย่อยง่าย สบายท้อง\n4. 🍲 **ชาบู / สุกี้**: อิ่มอร่อยช่วงเย็น\n\nสนใจเป็นอาหารไทย ญี่ปุ่น หรืออาหารคลีน พิมพ์บอกหนูเลขาคิมได้เลยนะคะ! 🌸`;
+  }
+
+  if (textLower.includes('สรุปการประชุม') || textLower.includes('กลุ่ม dex') || textLower.includes('กลุ่มdex')) {
+    return `หนูเลขาคิมสรุปประเด็นสำคัญจากการประชุมกลุ่ม DEX ครั้งล่าสุดให้แล้วค่ะ 📑✨\n\n📌 **หัวข้อหลัก:** สรุปแผนงานและระบบเลขา AI (DEX Group)\n\n💡 **สรุป 3 ประเด็นสำคัญ:**\n1. **ระบบเฝ้าโฟลเดอร์สลิป**: ตรวจจับและบันทึกรายจ่ายเข้าบัญชี 24 ชม.\n2. **LINE Official Account (@958xhyrx)**: เปิดใช้งาน AI Agent โต้ตอบในแชตอัตโนมัติ\n3. **Google Calendar Sync**: รองรับการลงตารางนัดหมายและกดเพิ่มใน 1 คลิก\n\nหากต้องการข้อมูลส่วนไหนเพิ่มเติม บอกหนูเลขาคิมได้เลยนะคะ! 😊`;
+  }
+
   return `หนูเลขาคิมรับทราบเรื่อง "${textClean}" เรียบร้อยแล้วค่ะ 🌸\n\nหนูพร้อมช่วยวิเคราะห์ วางแผน ร่างข้อความ หรือจัดการเรื่องนี้ให้คุณผู้ใช้เต็มที่ค่ะ หากมีข้อมูลเพิ่มเติม นัดหมายใหม่ หรือรูปสลิปค่าใช้จ่าย ส่งมาบอกหนูในแชตนี้ได้ตลอดเลยนะคะ! 😊`;
 }
 
@@ -216,7 +205,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    return res.status(200).send('LINE Contextual AI Agent Webhook is ACTIVE for เลขาคิม (@958xhyrx)');
+    return res.status(200).send('LINE Gemini AI Agent Webhook is ACTIVE for เลขาคิม (@958xhyrx)');
   }
 
   if (req.method === 'POST') {
@@ -225,7 +214,7 @@ export default async function handler(req, res) {
     for (const event of events) {
       if (event.type === 'message' && event.message?.type === 'text') {
         const userText = event.message.text || '';
-        const replyContent = generateContextualAiAgentResponse(userText);
+        const replyContent = await generateSmartAiAgentReply(userText);
         
         await replyLineMessage(event.replyToken, [
           {
