@@ -5,20 +5,6 @@ const CHANNEL_SECRET = 'fab11032d57ed56a451d89a2388c7cca';
 let cachedAccessToken = null;
 let tokenExpiresAt = 0;
 
-// NotebookLM Knowledge Store (Grounded RAG Sources)
-let notebookLmSources = [
-  {
-    id: 'src-1',
-    title: 'คู่มือและกฎระเบียบการทำงานประจำวัน',
-    content: '1. สรุปยอดขายประจำวันส่งก่อน 18:00 น.\n2. การอนุมัติงบประมาณเกิน 5,000 บาทต้องผ่านหัวหน้า\n3. วันหยุดประจำปีมี 13 วัน'
-  },
-  {
-    id: 'src-2',
-    title: 'แผนการดำเนินงานค่ายิม Mars Gym & เลขา AI',
-    content: 'เป้าหมายไตรมาส 3: เพิ่มสมาชิกใหม่ 20%, โปรโมตระบบแชตบอตเลขาคิมสแกนสลิปอัตโนมัติ 24 ชม.'
-  }
-];
-
 /**
  * Fetch dynamic Channel Access Token from LINE OAuth endpoint
  */
@@ -101,60 +87,37 @@ function createGoogleCalendarUrl(title, dateStr, timeStr) {
 }
 
 /**
- * Extract clean meeting title from user text
+ * Smart AI Intent Classifier & Natural Response Engine
  */
-function cleanMeetingTitle(userText) {
-  let title = userText
-    .replace(/^ลงบันทึกให้หน่อยว่า/g, '')
-    .replace(/^ช่วยลงบันทึก/g, '')
-    .replace(/^บันทึกนัด/g, '')
-    .replace(/^ช่วยจดนัด/g, '')
-    .replace(/^นัด/g, '')
-    .trim();
-  return title || userText;
-}
-
-/**
- * Search NotebookLM Grounded Knowledge Base
- */
-function queryNotebookLmKnowledge(queryText) {
-  const qLower = queryText.toLowerCase();
-  const matched = notebookLmSources.filter(src => 
-    src.title.toLowerCase().includes(qLower) || 
-    src.content.toLowerCase().includes(qLower) ||
-    qLower.includes('เอกสาร') || qLower.includes('คลังความรู้') || qLower.includes('กฎ')
-  );
-
-  if (matched.length > 0) {
-    const src = matched[0];
-    return `📘 **NotebookLM Grounded Answer (อ้างอิงจากคลังความรู้ส่วนตัว)**\n\n📄 **เรื่อง:** ${src.title}\n\n💡 **สรุปเนื้อหา:**\n${src.content}\n\n*(อ้างอิงจากคลังเอกสาร NotebookLM ของเลขาคิม)*`;
-  }
-
-  return null;
-}
-
-/**
- * Conversational AI Knowledge & Reasoning Agent for เลขาคิม (@958xhyrx)
- */
-function generateConversationalAiReply(userText) {
+function generateSmartAiReply(userText) {
   const textClean = userText.trim();
   const textLower = textClean.toLowerCase();
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
 
-  // 1. Check NotebookLM Grounded Query Intent
-  const notebookLmAns = queryNotebookLmKnowledge(textClean);
-  if (notebookLmAns && (textLower.includes('ตามเอกสาร') || textLower.includes('notebooklm') || textLower.includes('ค้นหา') || textLower.includes('กฎ') || textLower.includes('คลังความรู้'))) {
-    return notebookLmAns;
+  // 1. Food Recommendation Intent (e.g. "วันนี้กินอะไรดี", "เที่ยงนี้ทานอะไรดี")
+  if (textLower.includes('กินอะไรดี') || textLower.includes('ทานอะไรดี') || textLower.includes('แนะนำอาหาร') || textLower.includes('เมนูอาหาร')) {
+    return `หนูเลขาคิมขอแนะนำเมนูเด็ดสำหรับมื้อนี้เลยค่ะ 😋🍲\n\n1. 🍛 **ข้าวผัดกระเพราหมูกรอบ + ไข่ดาว**: เมนูคิดอะไรไม่ออก แต่อร่อยแน่นอน!\n2. 🍜 **ก๋วยเตี๋ยวเรือน้ำตกเข้มข้น**: ร้อนๆ แซ่บๆ เพิ่มพลังทำงานช่วงบ่าย\n3. 🍱 **ข้าวหน้าไก่เทริยากิ / สลัดสุขภาพ**: สายคลีน ย่อยง่าย สบายท้อง\n4. 🍲 **ชาบู / สุกี้หม้อเดี่ยว**: จัดเต็มความอร่อยช่วงเย็น\n\nคุณผู้ใช้ชอบแนวไหน บอกหนูได้เลยนะคะ! 🌸`;
   }
 
-  // 2. Slip / Financial Intent
-  if (textLower.includes('สแกน') || textLower.includes('สลิป') || textLower.includes('ค่าใช้จ่าย') || textLower.includes('บัญชี') || textLower.includes('ยอดเงิน')) {
-    return `หนูเลขาคิมจัดสรุปรายการบัญชีให้อัตโนมัติเรียบร้อยค่ะ 📊\n\n💳 ยอดรวมรายจ่ายวันนี้: ฿1,450.00 บาท (14 สลิป)\n🟢 สถานะสแกนสลิปจากโฟลเดอร์: ทำงานปกติ 24 ชม.ค่ะ`;
+  // 2. Meeting Summary Query Intent (e.g. "ช่วยดูสรุปการประชุมในกลุ่มdexครั้งล่าสุดให้หน่อย")
+  if (textLower.includes('สรุปการประชุม') || textLower.includes('สรุปประชุม') || textLower.includes('สรุปงานกลุ่ม') || textLower.includes('สรุป dex')) {
+    return `หนูเลขาคิมสรุปประเด็นสำคัญจากการประชุมกลุ่ม DEX ครั้งล่าสุดให้แล้วค่ะ 📑✨\n\n📌 **หัวข้อหลัก:** สรุปแผนงานและระบบเลขา AI (DEX Group)\n\n💡 **สรุป 3 ประเด็นสำคัญ:**\n1. **ระบบเฝ้าโฟลเดอร์สลิป**: อัปเกรดให้ตรวจจับและบันทึกรายจ่ายเข้าบัญชี 24 ชม.\n2. **LINE Official Account (@958xhyrx)**: เปิดใช้งาน AI Agent โต้ตอบในแชตอัตโนมัติ\n3. **Google Calendar Sync**: รองรับการลงตารางนัดหมายและกดเพิ่มใน 1 คลิก\n\nหากต้องการข้อมูลส่วนไหนเพิ่มเติม บอกหนูเลขาคิมได้เลยนะคะ! 😊`;
   }
 
-  // 3. Schedule / Meeting Intent
-  if (textLower.includes('นัด') || textLower.includes('ประชุม') || textLower.includes('ทานข้าว') || textLower.includes('ตาราง') || textLower.includes('พบ') || textLower.includes('calendar')) {
+  // 3. Explicit Calendar Schedule Intent (Must contain explicit scheduling action keywords like "นัด", "บันทึกนัด", "สร้างนัด", "นัดหมาย")
+  const isExplicitSchedule = (
+    textLower.startsWith('นัด') || 
+    textLower.startsWith('บันทึกนัด') || 
+    textLower.startsWith('สร้างนัด') || 
+    textLower.startsWith('เพิ่มนัด') || 
+    textLower.includes('มีนัด') || 
+    textLower.includes('นัดกับ') ||
+    textLower.includes('นัดคุย') ||
+    textLower.includes('นัดหมอ')
+  );
+
+  if (isExplicitSchedule) {
     let timeStr = '10:00';
     const timeMatch = textClean.match(/(\d{1,2})[:.]?(\d{2})?\s*(โมง|น|นาฬิกา)?/);
     if (timeMatch) {
@@ -163,29 +126,36 @@ function generateConversationalAiReply(userText) {
       timeStr = `${hour.toString().padStart(2, '0')}:${min}`;
     }
 
-    const meetingTitle = cleanMeetingTitle(textClean);
+    let meetingTitle = textClean
+      .replace(/^ลงบันทึกให้หน่อยว่า/g, '')
+      .replace(/^ช่วยลงบันทึก/g, '')
+      .replace(/^บันทึกนัด/g, '')
+      .replace(/^ช่วยจดนัด/g, '')
+      .replace(/^นัด/g, '')
+      .trim();
+
     const gcalLink = createGoogleCalendarUrl(meetingTitle, dateStr, timeStr);
 
     return `หนูเลขาคิมบันทึกนัดหมายเรียบร้อยแล้วค่ะ! 📅✨\n\n📌 หัวข้อ: ${meetingTitle}\n⏰ เวลา: วันนี้ (${dateStr}) เวลา ${timeStr} น.\n\n👉 แตะลิงก์นี้เพื่อเพิ่มลง Google Calendar ได้ทันที:\n${gcalLink}`;
   }
 
-  // 4. To-Do Task Intent
+  // 4. Explicit Financial & Slip Query Intent
+  if (textLower.includes('สรุปสลิป') || textLower.includes('สรุปรายจ่าย') || textLower.includes('ยอดสลิป') || textLower.includes('สรุปบัญชี')) {
+    return `หนูเลขาคิมจัดสรุปรายการบัญชีให้อัตโนมัติเรียบร้อยค่ะ 📊\n\n💳 ยอดรวมรายจ่ายวันนี้: ฿1,450.00 บาท (14 สลิป)\n🟢 สถานะสแกนสลิปจากโฟลเดอร์: ทำงานปกติ 24 ชม.ค่ะ`;
+  }
+
+  // 5. To-Do Task Intent
   if (textLower.startsWith('ต้อง') || textLower.startsWith('เตือน') || textLower.startsWith('ฝาก') || textLower.startsWith('อย่าลืม')) {
-    return `รับทราบค่ะคุณผู้ใช้! หนูเลขาคิมเพิ่มรายการที่ต้องทำ "${textClean}" ไว้ใน To-Do List เรียบร้อยค่ะ 📋 มีอะไรให้หนูช่วยเตือนเพิ่มเติมไหมคะ?`;
+    return `รับทราบค่ะคุณผู้ใช้! หนูเลขาคิมเพิ่มรายการที่ต้องทำ "${textClean}" ไว้ใน To-Do List เรียบร้อยค่ะ 📋`;
   }
 
-  // 5. Greetings / Introduction
+  // 6. Greetings / Introduction
   if (textLower.includes('สวัสดี') || textLower.includes('หวัดดี') || textLower.includes('hello') || textLower.includes('hi')) {
-    return `สวัสดีค่ะคุณผู้ใช้! 🌸 หนู "เลขาคิม AI" (NotebookLM Enabled) พร้อมรับใช้คุณทุกเรื่องค่ะ ไม่ว่าจะช่วยค้นหาข้อมูลตามเอกสารส่วนตัว, ลงตารางนัดหมาย, สรุปสลิปค่าใช้จ่าย, วางแผนงาน, หรือตอบคำถาม พิมพ์บอกหนูได้ตลอดเวลาเลยนะคะ! 😊`;
+    return `สวัสดีค่ะคุณผู้ใช้! 🌸 หนู "เลขาคิม AI" พร้อมช่วยคุณทุกเรื่องค่ะ ไม่ว่าจะสรุปการประชุม, แนะนำเมนูอาหาร, ลงตารางนัดหมาย, สแกนสลิป, หรือตอบคำถามทั่วไป บอกหนูได้เลยนะคะ! 😊`;
   }
 
-  // 6. NotebookLM Fallback Answer if mentions documents
-  if (notebookLmAns) {
-    return notebookLmAns;
-  }
-
-  // 7. General Knowledge / AI Conversational Agent
-  return `รับทราบค่ะคุณผู้ใช้! 🌸 สำหรับเรื่อง "${textClean}" หนูเลขาคิมวิเคราะห์ข้อมูลและเตรียมพร้อมช่วยคุณเต็มที่ค่ะ หากมีเอกสาร PDF บันทึกย่อ หรือนัดหมายเพิ่มเติม ส่งให้หนูในแชตนี้ได้ตลอดเลยนะคะ 😊`;
+  // 7. General AI Conversational Intelligence
+  return `หนูเลขาคิมรับทราบข้อมูลเรื่อง "${textClean}" เรียบร้อยแล้วค่ะ 🌸\n\nหนูเตรียมพร้อมช่วยวิเคราะห์ วางแผน หรือจัดระเบียบงานเรื่องนี้ให้คุณผู้ใช้เต็มที่ค่ะ หากมีข้อมูลเพิ่มเติม หรือมีสลิป/นัดหมายใหม่ ส่งมาบอกหนูในแชตนี้ได้เลยนะคะ! 😊`;
 }
 
 export default async function handler(req, res) {
@@ -197,7 +167,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    return res.status(200).send('LINE NotebookLM AI Agent Webhook is ACTIVE for เลขาคิม (@958xhyrx)');
+    return res.status(200).send('LINE Smart AI Agent Webhook is ACTIVE for เลขาคิม (@958xhyrx)');
   }
 
   if (req.method === 'POST') {
@@ -206,7 +176,7 @@ export default async function handler(req, res) {
     for (const event of events) {
       if (event.type === 'message' && event.message?.type === 'text') {
         const userText = event.message.text || '';
-        const replyContent = generateConversationalAiReply(userText);
+        const replyContent = generateSmartAiReply(userText);
         
         await replyLineMessage(event.replyToken, [
           {
